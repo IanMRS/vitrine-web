@@ -64,7 +64,26 @@ const cartSubtotal = $('cartSubtotal');
 const checkoutModal = $('checkoutModal');
 const orderForm = $('orderForm');
 
-window.addEventListener('DOMContentLoaded', () => {
+// Foto de produto que não existe/falhou -> mostra o placeholder (cobre card, modal e carrinho)
+document.addEventListener('error', e => {
+	const img = e.target;
+	if (img.tagName === 'IMG' && img.src.includes('/img/produtos/')) img.src = 'img/placeholder.svg';
+}, true);
+
+// Carrega os produtos do banco via PHP; se a API não responder, mantém o catálogo do products.js
+async function loadProductsFromAPI() {
+	try {
+		const res = await fetch('api/produtos.php');
+		if (!res.ok) throw new Error('HTTP ' + res.status);
+		const rows = await res.json();
+		if (Array.isArray(rows) && rows.length) PRODUCTS.splice(0, PRODUCTS.length, ...rows);
+	} catch (err) {
+		console.warn('API indisponível, usando products.js:', err.message);
+	}
+}
+
+window.addEventListener('DOMContentLoaded', async () => {
+	await loadProductsFromAPI();
 	initStoreInfo();
 	initFilters();
 	renderCatalog();
